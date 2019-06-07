@@ -162,8 +162,9 @@ class Example(QMainWindow):
 		self.toolbar = NavigationToolbar(self.m,self)
 		self.m.move(0,0)
 		self.title_timestamps()	
-		self.m.show()	
-			
+		self.m.show()#PlotCanvas and NavigationBar are two separate widget		
+		self.toolbar.show()#Thus, it's need two different show funtion
+	
 	def changeValue(self,value):
 		self.fig_num = value	
 		#print(self.fig_num)	
@@ -278,6 +279,8 @@ class PlotCanvas(FigureCanvas):
 						QSizePolicy.Expanding,
 						QSizePolicy.Expanding)
 		FigureCanvas.updateGeometry(self)
+		#self.toolbar = NavigationToolbar(FigureCanvas(self.fig),self)
+		
 		self.axes = self.fig.add_subplot(132)
 		self.img = SAXS
 		self.exp  = self.dexp.detectors[0].exp_para
