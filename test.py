@@ -44,14 +44,34 @@ class NewSample(QDialog):
 	@pyqtSlot()	
 	def button_clicked(self):
 		
-		new_window = Example(self)#need to append to self to show
+		self.name = 'exp'
+		self.openFileNameDialog()
+		
+		self.name = 'data'
+		self.openFileNameDialog()
+		new_window = Example(self,dexp=dexp,data=data)#need to append to self to show
 		self.windows.append(new_window)
 		new_window.show()
 
+	def openFileNameDialog(self):
+		options  = QFileDialog.Options()
+		options |= QFileDialog.DontUseNativeDialog
+		if self.name == 'exp':
+			filename, _ = QFileDialog.getOpenFileName(self,"Exp File","",
+						"All Files (*);;HDF Files (*.h5)", options = options)
+			global dexp
+			dexp = h5exp(filename)
+		else:
+			filename,_ = QFileDialog.getOpenFileName(self,"Data File","",
+						"All Files (*);HDF Files (*.h5)", options = options)
+			global data
+			data = h5xs(filename,[dexp.detectors,dexp.qgrid])
 
 class Example(QMainWindow):
-	def __init__(self,parent=None):
+	def __init__(self,parent=None,dexp=None,data=None):
 		super().__init__()
+		self.dexp   = dexp
+		self.data   = data
 		self.left   = 10
 		self.top    = 10
 		self.width  = 720
@@ -75,12 +95,6 @@ class Example(QMainWindow):
 		# connect buttion to function on_click
 		#self.button.clicked.connect(self.on_click)
 		
-		self.name = 'exp'
-		self.openFileNameDialog()
-		
-		self.name = 'data'
-		self.openFileNameDialog()
-		
 		#create textbox for loading exp_para and data
 		self.maxlbl = QLabel("max:",self)
 		self.maxlbl.resize(30,20)
@@ -98,7 +112,7 @@ class Example(QMainWindow):
 		self.setmin.resize(60,20)
 		self.setmin.textChanged[str].connect(self.set_min)
 		
-		self.top_layer_hdf = lsh5(data.fh5,top_only=True)
+		self.top_layer_hdf = lsh5(self.data.fh5,top_only=True)
 		#print(self.top_layer_hdf)
 		self.prefix = self.top_layer_hdf[0]
 		
@@ -107,7 +121,6 @@ class Example(QMainWindow):
 		self.logb.resize(80,20)
 		self.logb.setCheckable(True)
 		self.logb.clicked[bool].connect(self.logCheck)
-		/Users/Jiliangliu/Downloads/LiX_data/Baskin/data/exp.h5
 		self.maskb = QPushButton('mask',self)
 		self.maskb.move(520,40)
 		self.maskb.resize(80,20)
@@ -115,22 +128,22 @@ class Example(QMainWindow):
 		self.maskb.clicked[bool].connect(self.maskCheck)
 		
 		#print(self.fig_num)
-		if len(data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"].shape) == 3:	
-			scroller_num = data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"].shape[0]
-			self.SAXS_data  = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"]
-							[self.fig_num],exp = dexp.detectors[0].exp_para)
-			self.WAXS1_data = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"]
-							[self.fig_num],exp = dexp.detectors[1].exp_para)
-			self.WAXS2_data = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW2_ext_image"]
-							[self.fig_num],exp = dexp.detectors[2].exp_para)
-		elif len(data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"].shape) == 4:
-			scroller_num = data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"].shape[1]
-			self.SAXS_data  = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"]
-							[0,self.fig_num,],exp = dexp.detectors[0].exp_para)
-			self.WAXS1_data = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"]
-							[0,self.fig_num],exp = dexp.detectors[1].exp_para)
-			self.WAXS2_data = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW2_ext_image"]
-							[0,self.fig_num],exp = dexp.detectors[2].exp_para)
+		if len(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"].shape) == 3:	
+			scroller_num = self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"].shape[0]
+			self.SAXS_data  = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"]
+							[self.fig_num],exp = self.dexp.detectors[0].exp_para)
+			self.WAXS1_data = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"]
+							[self.fig_num],exp = self.dexp.detectors[1].exp_para)
+			self.WAXS2_data = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW2_ext_image"]
+							[self.fig_num],exp = self.dexp.detectors[2].exp_para)
+		elif len(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"].shape) == 4:
+			scroller_num = self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"].shape[1]
+			self.SAXS_data  = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"]
+							[0,self.fig_num,],exp = self.dexp.detectors[0].exp_para)
+			self.WAXS1_data = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"]
+							[0,self.fig_num],exp = self.dexp.detectors[1].exp_para)
+			self.WAXS2_data = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW2_ext_image"]
+							[0,self.fig_num],exp = self.dexp.detectors[2].exp_para)
 		#self.m = PlotCanvas(self,SAXS=self.SAXS_data,log=self.log,mask=self.mask)
 		self.sld = QSlider(Qt.Horizontal, self)
 		self.sld.setMinimum(0)
@@ -145,7 +158,7 @@ class Example(QMainWindow):
 	def plot(self):
 		self.m = PlotCanvas(self,SAXS=self.SAXS_data,WAXS1=self.WAXS1_data,
 							WAXS2=self.WAXS2_data,log=self.log,mask=self.mask,
-							vmax=self.vmax,vmin=self.vmin)
+							vmax=self.vmax,vmin=self.vmin,dexp=self.dexp)
 		self.toolbar = NavigationToolbar(self.m,self)
 		self.m.move(0,0)
 		self.title_timestamps()	
@@ -156,20 +169,20 @@ class Example(QMainWindow):
 		#print(self.fig_num)	
 		#self.maskb.stateChanged.connect(self.maskCheck)
 		#self.logb.stateChanged.connect(self.logCheck)
-		if len(data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"].shape) == 3:	
-			self.SAXS_data  = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"]
-							[self.fig_num],exp = dexp.detectors[0].exp_para)
-			self.WAXS1_data = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"]
-							[self.fig_num],exp = dexp.detectors[1].exp_para)
-			self.WAXS2_data = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW2_ext_image"]
-							[self.fig_num],exp = dexp.detectors[2].exp_para)
-		elif len(data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"].shape) == 4:
-			self.SAXS_data  = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"]
-							[0,self.fig_num,],exp = dexp.detectors[0].exp_para)
-			self.WAXS1_data = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"]
-							[0,self.fig_num],exp = dexp.detectors[1].exp_para)
-			self.WAXS2_data = Data2d(data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW2_ext_image"]
-							[0,self.fig_num],exp = dexp.detectors[2].exp_para)
+		if len(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"].shape) == 3:	
+			self.SAXS_data  = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"]
+							[self.fig_num],exp = self.dexp.detectors[0].exp_para)
+			self.WAXS1_data = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"]
+							[self.fig_num],exp = self.dexp.detectors[1].exp_para)
+			self.WAXS2_data = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW2_ext_image"]
+							[self.fig_num],exp = self.dexp.detectors[2].exp_para)
+		elif len(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"].shape) == 4:
+			self.SAXS_data  = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"]
+							[0,self.fig_num,],exp = self.dexp.detectors[0].exp_para)
+			self.WAXS1_data = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW1_ext_image"]
+							[0,self.fig_num],exp = self.dexp.detectors[1].exp_para)
+			self.WAXS2_data = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW2_ext_image"]
+							[0,self.fig_num],exp = self.dexp.detectors[2].exp_para)
 		self.plot()
 		
 	def logCheck(self,pressed):
@@ -201,19 +214,6 @@ class Example(QMainWindow):
 			self.vmin = float(value)
 		#print(type(value),value)
 		self.plot()
-	def openFileNameDialog(self):
-		options  = QFileDialog.Options()
-		options |= QFileDialog.DontUseNativeDialog
-		if self.name == 'exp':
-			filename, _ = QFileDialog.getOpenFileName(self,"Exp File","",
-						"All Files (*);;HDF Files (*.h5)", options = options)
-			global dexp
-			dexp = h5exp(filename)
-		else:
-			filename,_ = QFileDialog.getOpenFileName(self,"Data File","",
-						"All Files (*);HDF Files (*.h5)", options = options)
-			global data
-			data = h5xs(filename,[dexp.detectors,dexp.qgrid])
 
 	def title_timestamps(self):
 		self.title = self.prefix + "_%d" %self.fig_num
@@ -221,17 +221,17 @@ class Example(QMainWindow):
 		self.tableWidget = QTableWidget(self)
 		self.tableWidget.setRowCount(7)
 		self.tableWidget.setColumnCount(2)
-		if "em1_sum_all_mean_value_monitor" in lsh5(data.fh5[self.prefix],top_only=True):
+		if "em1_sum_all_mean_value_monitor" in lsh5(self.data.fh5[self.prefix],top_only=True):
 			em1_sum_all_mean_value = 1#data.fh5[self.prefix+\
 			#"/em1_sum_all_mean_value_monitor/data/em1_sum_all_mean_value"][self.fig_num]
 		else:	
-			em1_sum_all_mean_value = data.fh5[self.prefix+\
+			em1_sum_all_mean_value = self.data.fh5[self.prefix+\
 			"/primary/timestamps/em1_sum_all_mean_value"][self.fig_num]
-		if "em2_sum_all_mean_value_monitor" in lsh5(data.fh5[self.prefix],top_only=True):
+		if "em2_sum_all_mean_value_monitor" in lsh5(self.data.fh5[self.prefix],top_only=True):
 			em2_sum_all_mean_value = 1#data.fh5[self.prefix+\
 			#"/em2_sum_all_mean_value_monitor/data/em1_sum_all_mean_value"][self.fig_num]
 		else:
-			em2_sum_all_mean_value = data.fh5[self.prefix+\
+			em2_sum_all_mean_value = self.data.fh5[self.prefix+\
 			"/primary/timestamps/em2_sum_all_mean_value"][self.fig_num]
 		pil1M_ext_image = 1.#data.fh5[self.prefix+\
 		#"/primary/timestamps/pil1M_ext_image"][self.fig_num]
@@ -260,22 +260,18 @@ class Example(QMainWindow):
 		self.tableWidget.resize(280,240)
 		self.tableWidget.move(520,150)
 
-	@pyqtSlot()
-	def on_click(self):
-		path = self.textbox.text()
-		dexp = h5exp(path)
 
 class PlotCanvas(FigureCanvas):
 	def __init__(self, parent=None, width=5, height=4, dpi=100, 
 				SAXS=None,WAXS1=None,WAXS2=None,
-				log=False,mask=False,vmax=None,vmin=None):
+				log=False,mask=False,vmax=None,vmin=None,dexp=None):
 		#super().__init__()
 		self.fig = Figure(figsize=(width,height),dpi=dpi)
 		self.log = log
 		self.mask_check = mask
 		self.vmax = vmax
 		self.vmin = vmin
-		
+		self.dexp =dexp
 		FigureCanvas.__init__(self,self.fig)
 		self.setParent(parent)
 		FigureCanvas.setSizePolicy(self,
@@ -283,23 +279,23 @@ class PlotCanvas(FigureCanvas):
 						QSizePolicy.Expanding)
 		FigureCanvas.updateGeometry(self)
 		self.axes = self.fig.add_subplot(132)
-		self.data = SAXS
-		self.exp  = dexp.detectors[0].exp_para
-		self.mask = dexp.detectors[0].exp_para.mask
+		self.img = SAXS
+		self.exp  = self.dexp.detectors[0].exp_para
+		self.mask = self.dexp.detectors[0].exp_para.mask
 		self.plot()
 		self.axes = self.fig.add_subplot(133)
-		self.data = WAXS1
-		self.exp  = dexp.detectors[1].exp_para
-		self.mask = dexp.detectors[1].exp_para.mask
+		self.img = WAXS1
+		self.exp  = self.dexp.detectors[1].exp_para
+		self.mask = self.dexp.detectors[1].exp_para.mask
 		self.plot()
 		self.axes = self.fig.add_subplot(131)
-		self.data = WAXS2
-		self.exp  = dexp.detectors[2].exp_para
-		self.mask = dexp.detectors[2].exp_para.mask
+		self.img = WAXS2
+		self.exp  = self.dexp.detectors[2].exp_para
+		self.mask = self.dexp.detectors[2].exp_para.mask
 		self.plot()
 	
 	def plot(self):
-		im = self.data
+		im = self.img
 		ax = self.axes
 		paxr = Axes2dPlot(ax, im.data, exp = self.exp)
 		if self.mask_check:
