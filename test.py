@@ -74,8 +74,8 @@ class Example(QMainWindow):
 		self.data   = data
 		self.left   = 10
 		self.top    = 10
-		self.width  = 720
-		self.height = 480
+		self.width  = 1560
+		self.height = 680
 		self.title  = 'Load Scan Exp Img'
 		self.fig_num = 0
 		self.mask   = False
@@ -96,36 +96,10 @@ class Example(QMainWindow):
 		#self.button.clicked.connect(self.on_click)
 		
 		#create textbox for loading exp_para and data
-		self.maxlbl = QLabel("max:",self)
-		self.maxlbl.resize(30,20)
-		self.maxlbl.move(520,70)
-		self.setmax = QLineEdit(self)
-		self.setmax.move(560,70)
-		self.setmax.resize(60,20)
-		self.setmax.textChanged[str].connect(self.set_max)
-		
-		self.minlbl = QLabel("min:",self)
-		self.minlbl.resize(30,20)
-		self.minlbl.move(520,100)
-		self.setmin = QLineEdit(self)
-		self.setmin.move(560,100)
-		self.setmin.resize(60,20)
-		self.setmin.textChanged[str].connect(self.set_min)
 		
 		self.top_layer_hdf = lsh5(self.data.fh5,top_only=True)
 		#print(self.top_layer_hdf)
 		self.prefix = self.top_layer_hdf[0]
-		
-		self.logb = QPushButton('logscale',self)
-		self.logb.move(520,10)
-		self.logb.resize(80,20)
-		self.logb.setCheckable(True)
-		self.logb.clicked[bool].connect(self.logCheck)
-		self.maskb = QPushButton('mask',self)
-		self.maskb.move(520,40)
-		self.maskb.resize(80,20)
-		self.maskb.setCheckable(True)
-		self.maskb.clicked[bool].connect(self.maskCheck)
 		
 		#print(self.fig_num)
 		if len(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pil1M_ext_image"].shape) == 3:	
@@ -152,21 +126,135 @@ class Example(QMainWindow):
 		self.sld.move(0,450)
 		self.sld.resize(360,20)
 		self.sld.valueChanged.connect(self.changeValue)
-		self.plot()
+		self.title = self.prefix + "_%d" %self.fig_num
+		self.setWindowTitle(self.title)
+		self.title_timestamps()	
+		self.plotSAXS()
+		self.plotWAXS2()
+		self.plotWAXS1()
 		self.show()
 	
-	def plot(self):
-		self.m = PlotCanvas(self,SAXS=self.SAXS_data,WAXS1=self.WAXS1_data,
-							WAXS2=self.WAXS2_data,log=self.log,mask=self.mask,
+	def plotSAXS(self):
+		self.maxlbl = QLabel("max:",self)
+		self.maxlbl.resize(30,20)
+		self.maxlbl.move(930,70)
+		self.setsmax = QLineEdit(self)
+		self.setsmax.move(970,70)
+		self.setsmax.resize(60,20)
+		self.setsmax.textChanged[str].connect(self.SAXSset_max)
+		
+		self.minlbl = QLabel("min:",self)
+		self.minlbl.resize(30,20)
+		self.minlbl.move(930,100)
+		self.setsmin = QLineEdit(self)
+		self.setsmin.move(970,100)
+		self.setsmin.resize(60,20)
+		self.setsmin.textChanged[str].connect(self.SAXSset_min)
+		
+		self.slogb = QPushButton('logscale',self)
+		self.slogb.move(930,10)
+		self.slogb.resize(80,20)
+		self.slogb.setCheckable(True)
+		self.slogb.clicked[bool].connect(self.SAXSlogCheck)
+		self.smaskb = QPushButton('mask',self)
+		self.smaskb.move(930,40)
+		self.smaskb.resize(80,20)
+		self.smaskb.setCheckable(True)
+		self.smaskb.clicked[bool].connect(self.SAXSmaskCheck)
+		
+		self.m = PlotCanvas(self,img=self.SAXS_data,img_type = 'SAXS',
+							log=self.log,mask=self.mask,
+							vmax=self.vmax,vmin=self.vmin,dexp=self.dexp)
+		self.toolbar = NavigationToolbar(self.m,self)
+		self.m.move(520,0)
+		#self.title_timestamps()	
+		self.m.show()#PlotCanvas and NavigationBar are two separate widget		
+		self.toolbar.resize(360,30)
+		self.toolbar.move(520,300)
+		self.toolbar.show()#Thus, it's need two different show funtion
+	
+	def plotWAXS2(self):
+		self.maxlbl = QLabel("max:",self)
+		self.maxlbl.resize(30,20)
+		self.maxlbl.move(410,70)
+		self.setw2max = QLineEdit(self)
+		self.setw2max.move(450,70)
+		self.setw2max.resize(60,20)
+		self.setw2max.textChanged[str].connect(self.WAXS2set_max)
+		
+		self.minlbl = QLabel("min:",self)
+		self.minlbl.resize(30,20)
+		self.minlbl.move(410,100)
+		self.setw2min = QLineEdit(self)
+		self.setw2min.move(450,100)
+		self.setw2min.resize(60,20)
+		self.setw2min.textChanged[str].connect(self.WAXS2set_min)
+		
+		self.w2logb = QPushButton('logscale',self)
+		self.w2logb.move(410,10)
+		self.w2logb.resize(80,20)
+		self.w2logb.setCheckable(True)
+		self.w2logb.clicked[bool].connect(self.WAXS2logCheck)
+		self.w2maskb = QPushButton('mask',self)
+		self.w2maskb.move(410,40)
+		self.w2maskb.resize(80,20)
+		self.w2maskb.setCheckable(True)
+		self.w2maskb.clicked[bool].connect(self.WAXS2maskCheck)
+		
+		self.m = PlotCanvas(self,img=self.WAXS2_data,img_type = 'WAXS2',
+							log=self.log,mask=self.mask,
 							vmax=self.vmax,vmin=self.vmin,dexp=self.dexp)
 		self.toolbar = NavigationToolbar(self.m,self)
 		self.m.move(0,0)
+		#self.title_timestamps()	
+		self.m.show()#PlotCanvas and NavigationBar are two separate widget		
+		self.toolbar.resize(360,30)
+		self.toolbar.move(0,300)
+		self.toolbar.show()#Thus, it's need two different show funtion
+	
+	def plotWAXS1(self):
+		self.maxlbl = QLabel("max:",self)
+		self.maxlbl.resize(30,20)
+		self.maxlbl.move(1450,70)
+		self.setw2max = QLineEdit(self)
+		self.setw2max.move(1490,70)
+		self.setw2max.resize(60,20)
+		self.setw2max.textChanged[str].connect(self.WAXS1set_max)
+		
+		self.minlbl = QLabel("min:",self)
+		self.minlbl.resize(30,20)
+		self.minlbl.move(1450,100)
+		self.setw2min = QLineEdit(self)
+		self.setw2min.move(1490,100)
+		self.setw2min.resize(60,20)
+		self.setw2min.textChanged[str].connect(self.WAXS1set_min)
+		
+		self.w2logb = QPushButton('logscale',self)
+		self.w2logb.move(1450,10)
+		self.w2logb.resize(80,20)
+		self.w2logb.setCheckable(True)
+		self.w2logb.clicked[bool].connect(self.WAXS1logCheck)
+		self.w2maskb = QPushButton('mask',self)
+		self.w2maskb.move(1450,40)
+		self.w2maskb.resize(80,20)
+		self.w2maskb.setCheckable(True)
+		self.w2maskb.clicked[bool].connect(self.WAXS1maskCheck)
+		
+		self.m = PlotCanvas(self,img=self.WAXS1_data,img_type = 'WAXS1',
+							log=self.log,mask=self.mask,
+							vmax=self.vmax,vmin=self.vmin,dexp=self.dexp)
+		self.toolbar = NavigationToolbar(self.m,self)
+		self.m.move(1040,0)
 		self.title_timestamps()	
 		self.m.show()#PlotCanvas and NavigationBar are two separate widget		
+		self.toolbar.resize(360,30)
+		self.toolbar.move(1040,300)
 		self.toolbar.show()#Thus, it's need two different show funtion
 	
 	def changeValue(self,value):
 		self.fig_num = value	
+		self.title = self.prefix + "_%d" %self.fig_num
+		self.setWindowTitle(self.title)
 		#print(self.fig_num)	
 		#self.maskb.stateChanged.connect(self.maskCheck)
 		#self.logb.stateChanged.connect(self.logCheck)
@@ -184,66 +272,142 @@ class Example(QMainWindow):
 							[0,self.fig_num],exp = self.dexp.detectors[1].exp_para)
 			self.WAXS2_data = Data2d(self.data.fh5[self.top_layer_hdf[0]+"/primary/data/pilW2_ext_image"]
 							[0,self.fig_num],exp = self.dexp.detectors[2].exp_para)
-		self.plot()
+		self.plotSAXS()
+		self.plotWAXS2()
+		self.plotWAXS1()
+		self.title_timestamps()	
 		
-	def logCheck(self,pressed):
+	def SAXSlogCheck(self,pressed):
 		if pressed:
 			self.log = True
 		else:
 			self.log = False
-		self.plot()
+		self.plotSAXS()
 		
-	def maskCheck(self,pressed):
+	def SAXSmaskCheck(self,pressed):
 		if pressed:
 			self.mask = True
 		else:
 			self.mask = False
-		self.plot()
+		self.plotSAXS()
 	
-	def set_max(self,value):
+	def SAXSset_max(self,value):
 		if value == "":
 			self.vmax = None
 		else:
 			self.vmax = float(value)
 		#print(type(value),value)
-		self.plot()
+		self.plotSAXS()
 		
-	def set_min(self,value):
+	def SAXSset_min(self,value):
 		if value == "":
 			self.vmin = None
 		else:
 			self.vmin = float(value)
 		#print(type(value),value)
-		self.plot()
+		self.plotSAXS()
 
+	def WAXS2logCheck(self,pressed):
+		if pressed:
+			self.log = True
+		else:
+			self.log = False
+		self.plotWAXS2()
+		
+	def WAXS2maskCheck(self,pressed):
+		if pressed:
+			self.mask = True
+		else:
+			self.mask = False
+		self.plotWAXS2()
+	
+	def WAXS2set_max(self,value):
+		if value == "":
+			self.vmax = None
+		else:
+			self.vmax = float(value)
+		#print(type(value),value)
+		self.plotWAXS2()
+		
+	def WAXS2set_min(self,value):
+		if value == "":
+			self.vmin = None
+		else:
+			self.vmin = float(value)
+		#print(type(value),value)
+		self.plotWAXS2()
+	
+	def WAXS1logCheck(self,pressed):
+		if pressed:
+			self.log = True
+		else:
+			self.log = False
+		self.plotWAXS1()
+		
+	def WAXS1maskCheck(self,pressed):
+		if pressed:
+			self.mask = True
+		else:
+			self.mask = False
+		self.plotWAXS1()
+	
+	def WAXS1set_max(self,value):
+		if value == "":
+			self.vmax = None
+		else:
+			self.vmax = float(value)
+		#print(type(value),value)
+		self.plotWAXS1()
+		
+	def WAXS1set_min(self,value):
+		if value == "":
+			self.vmin = None
+		else:
+			self.vmin = float(value)
+		#print(type(value),value)
+		self.plotWAXS1()
+	
 	def title_timestamps(self):
-		self.title = self.prefix + "_%d" %self.fig_num
-		self.setWindowTitle(self.title)
 		self.tableWidget = QTableWidget(self)
 		self.tableWidget.setRowCount(7)
 		self.tableWidget.setColumnCount(2)
-		if "em1_sum_all_mean_value_monitor" in lsh5(self.data.fh5[self.prefix],top_only=True):
-			em1_sum_all_mean_value = 1#data.fh5[self.prefix+\
-			#"/em1_sum_all_mean_value_monitor/data/em1_sum_all_mean_value"][self.fig_num]
-		else:	
-			em1_sum_all_mean_value = self.data.fh5[self.prefix+\
-			"/primary/timestamps/em1_sum_all_mean_value"][self.fig_num]
-		if "em2_sum_all_mean_value_monitor" in lsh5(self.data.fh5[self.prefix],top_only=True):
-			em2_sum_all_mean_value = 1#data.fh5[self.prefix+\
-			#"/em2_sum_all_mean_value_monitor/data/em1_sum_all_mean_value"][self.fig_num]
-		else:
-			em2_sum_all_mean_value = self.data.fh5[self.prefix+\
-			"/primary/timestamps/em2_sum_all_mean_value"][self.fig_num]
-		pil1M_ext_image = 1.#data.fh5[self.prefix+\
-		#"/primary/timestamps/pil1M_ext_image"][self.fig_num]
-		pilW1_ext_image = 1.#data.fh5[self.prefix+\
-		#"/primary/timestamps/pilW1_ext_image"][self.fig_num]
-		pilW2_ext_image = 1.#data.fh5[self.prefix+\
-		#"/primary/timestamps/pilW2_ext_image"][self.fig_num]
-		ss2_x = 1.#data.fh5[self.prefix+\
-		#"/primary/timestamps/ss2_x"][self.fig_num]
-		ss2_y = 1.#data.fh5[self.prefix+\
-		#"/primary/timestamps/ss2_y"][self.fig_num]
+		em1_sum_all_mean_value = "NaN"
+		em2_sum_all_mean_value = "NaN"
+		pil1M_ext_image = "NaN"
+		pilW1_ext_image = "NaN"
+		pilW2_ext_image = "NaN"
+		ss2_x = "NaN"
+		ss2_y = "NaN"
+		
+		if ("em1_sum_all_mean_value" in self.data.fh5[self.prefix+"/primary/timestamps/"]): 
+			if (self.fig_num < self.data.fh5[self.prefix+"/primary/timestamps/em1_sum_all_mean_value"].shape[0]):
+				em1_sum_all_mean_value = self.data.fh5[self.prefix+\
+				"/primary/timestamps/em1_sum_all_mean_value"][self.fig_num]
+		if ("em2_sum_all_mean_value" in self.data.fh5[self.prefix+"/primary/timestamps/"]):
+			if (self.fig_num < self.data.fh5[self.prefix+"/primary/timestamps/em2_sum_all_mean_value"].shape[0]):
+				em2_sum_all_mean_value = self.data.fh5[self.prefix+\
+				"/primary/timestamps/em2_sum_all_mean_value"][self.fig_num]
+		if ("pil1M_ext_image" in self.data.fh5[self.prefix+"/primary/timestamps/"]):
+			if (self.fig_num < self.data.fh5[self.prefix+"/primary/timestamps/pil1M_ext_image"].shape[0]):
+				pil1M_ext_image = self.data.fh5[self.prefix+\
+				"/primary/timestamps/pil1M_ext_image"][self.fig_num]
+		if ("pilW1_ext_image" in self.data.fh5[self.prefix+"/primary/timestamps/"]):
+			if (self.fig_num < self.data.fh5[self.prefix+"/primary/timestamps/pilW1_ext_image"].shape[0]):
+				pilW1_ext_image = self.data.fh5[self.prefix+\
+				"/primary/timestamps/pilW1_ext_image"][self.fig_num]
+		if ("pilW2_ext_image" in self.data.fh5[self.prefix+"/primary/timestamps/"]):
+			if (self.fig_num < self.data.fh5[self.prefix+"/primary/timestamps/pilW2_ext_image"].shape[0]):
+				pilW2_ext_image = self.data.fh5[self.prefix+\
+				"/primary/timestamps/pilW2_ext_image"][self.fig_num]
+		if ("ss2_x" in self.data.fh5[self.prefix+"/primary/timestamps/"]):
+			if (self.fig_num < self.data.fh5[self.prefix+"/primary/timestamps/ss2_x"].shape[0]):
+				ss2_x = self.data.fh5[self.prefix+\
+				"/primary/timestamps/ss2_x"][self.fig_num]
+		if ("ss2_y" in self.data.fh5[self.prefix+"/primary/timestamps/"]):
+			if (self.fig_num < self.data.fh5[self.prefix+"/primary/timestamps/ss2_y"].shape[0]):
+				ss2_y = self.data.fh5[self.prefix+\
+				"/primary/timestamps/ss2_y"][self.fig_num]
+		
 		self.tableWidget.setItem(0,0,QTableWidgetItem("em1"))	
 		self.tableWidget.setItem(0,1,QTableWidgetItem(str(em1_sum_all_mean_value)))	
 		self.tableWidget.setItem(1,0,QTableWidgetItem("em2"))	
@@ -259,12 +423,12 @@ class Example(QMainWindow):
 		self.tableWidget.setItem(6,0,QTableWidgetItem("ss2_y"))	
 		self.tableWidget.setItem(6,1,QTableWidgetItem(str(ss2_y)))	
 		self.tableWidget.resize(280,240)
-		self.tableWidget.move(520,150)
+		self.tableWidget.move(500,350)
 
 
 class PlotCanvas(FigureCanvas):
-	def __init__(self, parent=None, width=5, height=4, dpi=100, 
-				SAXS=None,WAXS1=None,WAXS2=None,
+	def __init__(self, parent=None, width=4, height=3, dpi=100, 
+				img=None,img_type=None,
 				log=False,mask=False,vmax=None,vmin=None,dexp=None):
 		#super().__init__()
 		self.fig = Figure(figsize=(width,height),dpi=dpi)
@@ -281,20 +445,17 @@ class PlotCanvas(FigureCanvas):
 		FigureCanvas.updateGeometry(self)
 		#self.toolbar = NavigationToolbar(FigureCanvas(self.fig),self)
 		
-		self.axes = self.fig.add_subplot(132)
-		self.img = SAXS
-		self.exp  = self.dexp.detectors[0].exp_para
-		self.mask = self.dexp.detectors[0].exp_para.mask
-		self.plot()
-		self.axes = self.fig.add_subplot(133)
-		self.img = WAXS1
-		self.exp  = self.dexp.detectors[1].exp_para
-		self.mask = self.dexp.detectors[1].exp_para.mask
-		self.plot()
-		self.axes = self.fig.add_subplot(131)
-		self.img = WAXS2
-		self.exp  = self.dexp.detectors[2].exp_para
-		self.mask = self.dexp.detectors[2].exp_para.mask
+		self.axes = self.fig.add_subplot(111)
+		self.img = img
+		if img_type == 'SAXS':
+			self.exp  = self.dexp.detectors[0].exp_para
+			self.mask = self.dexp.detectors[0].exp_para.mask
+		elif img_type == 'WAXS1':
+			self.exp  = self.dexp.detectors[1].exp_para
+			self.mask = self.dexp.detectors[1].exp_para.mask
+		elif img_type == 'WAXS2':
+			self.exp  = self.dexp.detectors[2].exp_para
+			self.mask = self.dexp.detectors[2].exp_para.mask
 		self.plot()
 	
 	def plot(self):
